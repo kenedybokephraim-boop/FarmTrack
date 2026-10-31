@@ -99,9 +99,6 @@ export function useAI(farmerId: string | null) {
   const isDemo = typeof window !== 'undefined' && document.cookie.includes('demo_mode=true')
 
     const getAIAdvice = useCallback(async (question: string, records: DailyRecord[], weeklyData: WeeklyDataPoint[]): Promise<AIResponse> => {
-      if (!process.env.NEXT_PUBLIC_HF_TOKEN) {
-        return { success: false, error: 'Hugging Face API token not configured' }
-      }
 
      setLoading(true)
 
@@ -133,26 +130,24 @@ export function useAI(farmerId: string | null) {
            * Use these prices for any financial estimates.
        `
 
-       const response = await fetch('https://router.huggingface.co/v1/chat/completions', {
+       const response = await fetch('/api/ai-diagnosis', {
          method: 'POST',
          headers: {
-           'Authorization': `Bearer ${process.env.NEXT_PUBLIC_HF_TOKEN}`,
            'Content-Type': 'application/json',
          },
          body: JSON.stringify({
-           model: 'meta-llama/Llama-3.1-8B-Instruct:novita',
-           messages: [{ role: 'user', content: prompt }],
-           max_tokens: 500,
+           prompt,
+           question,
          }),
        })
 
        if (!response.ok) {
          const errorData = await response.json().catch(() => ({}))
-         throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`)
+         throw new Error(errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`)
        }
 
        const data = await response.json()
-       const aiResponse = data.choices?.[0]?.message?.content
+       const aiResponse = data.response || data.choices?.[0]?.message?.content
 
        if (!aiResponse) {
          throw new Error('Invalid response format from AI provider')
