@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     }
 
     const groqPayload = {
-      model: 'llama-3.1-8b-instant',
+      model: 'openai/gpt-oss-20b',
       messages,
       temperature: body?.temperature ?? 0.7,
       max_tokens: body?.max_tokens ?? 1024,
